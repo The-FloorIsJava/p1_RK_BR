@@ -46,7 +46,7 @@ public class ApplicationController {
         app.post("employee",this::registerEmployee);
         app.post("administrator",this::registerAdministrator);
         app.post("login",this::login);
-        app.post("{username}/ticket",this::postTicketHandler);
+        app.post("ticket",this::postTicketHandler);
         app.post("{username}/update-ticket",this::updateTicketStatus);
 
         // Get handlers
@@ -139,7 +139,7 @@ public class ApplicationController {
         String token = getTokenFromContext(context);
 
         PasswordProtectedProfile profile = jwtUtility.extractToken(token);
-        String username =  context.pathParam("username");
+        //String username =  context.pathParam("username");
 
 
 
@@ -147,17 +147,13 @@ public class ApplicationController {
         double amount;
         String description;
         try {
-
-            if (!username.equals(profile.getUsername())) {
-                throw new UnauthorizedAccessException();
-            }
-
             amount = mapper.readValue(context.body(), TicketRecord.class).amount();
             description = mapper.readValue(context.body(),TicketRecord.class).description();
             ticketService.enterTicket(new Ticket(profile.getUsername(), description,amount));
+            context.status(200);
         } catch (UnauthorizedAccessException e) {
             context.status(400);
-            context.json("Not logged in as " + username);
+            context.json("Not logged in as " + profile.getLastName());
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
@@ -293,7 +289,7 @@ public class ApplicationController {
      * @ return token
      * */
     private String getTokenFromContext(Context context){
-        return context.header("Authorization");/*.split(" ")[1];*/
+        return context.header("Authorization");
     }
 
 }
